@@ -49,9 +49,25 @@ if (!canvas) {
 					}
 				}
 			}
+
+			update() {
+				this.draw()
+				this.position.x += this.velocity.x
+			}
 		}
 
 		const player = new Player()
+		const keys = {
+			a: {
+				pressed: false
+			},
+			d: {
+				pressed: false
+			},
+			space: {
+				pressed: false
+			},
+		}
 
 		function animate() {
 			requestAnimationFrame(animate)
@@ -61,9 +77,52 @@ if (!canvas) {
 			} else {
 				console.error('Canvas not loaded')
 			}
-			player.draw()
+			player.update()
+
+			if (keys.a.pressed) {
+				player.velocity.x = -5
+			} else {
+				player.velocity.x = 0
+			}
 		}
 
 		animate()
+
+		addEventListener('keydown', ({key}) => {
+			switch (key) {
+				case 'a':
+					console.log('left')
+					player.velocity.x = -5
+					keys.a.pressed = true
+					break
+				case 'd':
+					console.log('right')
+					player.velocity.x = 5
+					keys.d.pressed = true
+					break
+				case ' ':
+					console.log('shoot')
+					keys.space.pressed = true
+					break
+			}
+		})
+		addEventListener('keyup', ({key}) => {
+			switch (key) {
+				case 'a':
+					console.log('left')
+					player.velocity.x = -5
+					keys.a.pressed = true
+					break
+				case 'd':
+					console.log('right')
+					player.velocity.x = 5
+					keys.d.pressed = true
+					break
+				case ' ':
+					console.log('shoot')
+					keys.space.pressed = true
+					break
+			}
+		})
 	}
 }
