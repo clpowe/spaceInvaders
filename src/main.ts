@@ -15,12 +15,15 @@ if (!canvas) {
 			image: HTMLImageElement | undefined
 			width: number = 0
 			height: number = 0
+			rotation: number = 0
 
 			constructor() {
 				this.velocity = {
 					x: 0,
 					y: 0
 				}
+
+				this.rotation = 0
 
 				const image = new Image()
 				image.src = './img/spaceship.png'
@@ -38,6 +41,17 @@ if (!canvas) {
 
 			draw() {
 				if (c) {
+					c.save()
+					c.translate(
+						player.position.x + player.width / 2,
+						player.position.y + player.height / 2
+					)
+					c.rotate(this.rotation)
+
+					c.translate(
+						-player.position.x - player.width / 2,
+						-player.position.y - player.height / 2
+					)
 					if (this.image) {
 						c.drawImage(
 							this.image,
@@ -48,6 +62,7 @@ if (!canvas) {
 						)
 					}
 				}
+				c!.restore()
 			}
 
 			update() {
@@ -56,7 +71,41 @@ if (!canvas) {
 			}
 		}
 
+		class Projectile {
+			position: { x: number; y: number } = { x: 0, y: 0 }
+			velocity: { x: number; y: number } = { x: 0, y: 0 }
+			radius: number = 0
+
+			constructor({
+				position,
+				velocity
+			}: {
+				position: { x: number; y: number }
+				velocity: { x: number; y: number }
+			}) {
+				this.position = position
+				this.velocity = velocity
+
+				this.radius = 3
+			}
+
+			draw() {
+				c!.beginPath()
+				c!.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+				c!.fillStyle = 'red'
+				c!.fill()
+				c!.closePath()
+			}
+
+			update() {
+				this.draw()
+				this.position.x += this.velocity.x
+				this.position.y += this.velocity.y
+			}
+		}
+
 		const player = new Player()
+		const projectiles: Projectile[] = []
 		const keys = {
 			a: {
 				pressed: false
@@ -66,7 +115,7 @@ if (!canvas) {
 			},
 			space: {
 				pressed: false
-			},
+			}
 		}
 
 		function animate() {
@@ -78,48 +127,63 @@ if (!canvas) {
 				console.error('Canvas not loaded')
 			}
 			player.update()
+			projectiles.forEach((projectile, index) => {
+				if (projectile.position.y + projectile.radius <= 0) {
+					setTimeout(() => {
+						projectiles.slice(index, 1)
+					}, 0)
+				} else {
+					projectile.update()
+				}
+			})
 
-			if (keys.a.pressed) {
-				player.velocity.x = -5
+			if (keys.a.pressed && player.position.x >= 0) {
+				player.velocity.x = -7
+				player.rotation = -0.15
+			} else if (
+				keys.d.pressed &&
+				player.position.x + player.width <= canvas!.width
+			) {
+				player.velocity.x = 7
+				player.rotation = 0.15
 			} else {
+				player.rotation = 0
 				player.velocity.x = 0
 			}
 		}
 
 		animate()
 
-		addEventListener('keydown', ({key}) => {
+		addEventListener('keydown', ({ key }) => {
 			switch (key) {
 				case 'a':
-					console.log('left')
-					player.velocity.x = -5
 					keys.a.pressed = true
 					break
 				case 'd':
-					console.log('right')
-					player.velocity.x = 5
 					keys.d.pressed = true
 					break
 				case ' ':
-					console.log('shoot')
-					keys.space.pressed = true
+					projectiles.push(
+						new Projectile({
+							position: {
+								x: player.position.x + player.width / 2,
+								y: player.position.y
+							},
+							velocity: { x: 0, y: -10 }
+						})
+					)
 					break
 			}
 		})
-		addEventListener('keyup', ({key}) => {
+		addEventListener('keyup', ({ key }) => {
 			switch (key) {
 				case 'a':
-					console.log('left')
-					player.velocity.x = -5
-					keys.a.pressed = true
+					keys.a.pressed = false
 					break
 				case 'd':
-					console.log('right')
-					player.velocity.x = 5
-					keys.d.pressed = true
+					keys.d.pressed = false
 					break
 				case ' ':
-					console.log('shoot')
 					keys.space.pressed = true
 					break
 			}
